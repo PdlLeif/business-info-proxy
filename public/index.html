@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Info Proxy</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .endpoint { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .method { color: #0070f3; font-weight: bold; }
+        code { background: #f1f1f1; padding: 2px 4px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🏢 Business Info Proxy</h1>
+    <p>Universal business information API proxy for HubSpot integrations</p>
+    
+    <h2>API Endpoints</h2>
+    
+    <div class="endpoint">
+        <div class="method">POST</div>
+        <h3>/api/business-info</h3>
+        <p>Main business information lookup endpoint</p>
+        <p><strong>Body:</strong> <code>{"searchType": "organisasjonsnummer", "searchValue": "974760673"}</code></p>
+    </div>
+    
+    <div class="endpoint">
+        <div class="method">GET</div>
+        <h3>/api/health</h3>
+        <p>Service health check and provider status</p>
+    </div>
+    
+    <h2>Quick Test</h2>
+    <button onclick="testHealth()">Test Health Endpoint</button>
+    <button onclick="testBrreg()">Test Brreg Lookup</button>
+    
+    <div id="result" style="margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px; display: none;">
+        <h3>Result:</h3>
+        <pre id="resultContent"></pre>
+    </div>
+    
+    <script>
+        async function testHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                showResult({error: error.message});
+            }
+        }
+        
+        async function testBrreg() {
+            try {
+                const response = await fetch('/api/business-info', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        searchType: 'organisasjonsnummer',
+                        searchValue: '974760673'
+                    })
+                });
+                const data = await response.json();
+                showResult(data);
+            } catch (error) {
+                showResult({error: error.message});
+            }
+        }
+        
+        function showResult(data) {
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('resultContent').textContent = JSON.stringify(data, null, 2);
+        }
+    </script>
+</body>
+</html>

@@ -1,13 +1,12 @@
 {
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/api/health"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
