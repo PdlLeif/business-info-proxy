@@ -1,0 +1,35 @@
+{
+  "name": "business-info-proxy",
+  "version": "1.0.0",
+  "description": "Universal business information API proxy for HubSpot integrations - supports Norwegian Brreg and future business data providers",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed for serverless functions'",
+    "start": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "business-info",
+    "brreg", 
+    "hubspot",
+    "api-proxy",
+    "norwegian-business-registry",
+    "vercel",
+    "serverless"
+  ],
+  "author": "Leif Strøm <proper-deal>",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@vercel/node": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PdlLeif/business-info-proxy.git"
+  }
+}
