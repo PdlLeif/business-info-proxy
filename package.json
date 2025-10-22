@@ -12,7 +12,7 @@
   },
   "keywords": [
     "business-info",
-    "brreg", 
+    "brreg",
     "hubspot",
     "api-proxy",
     "norwegian-business-registry",
@@ -21,7 +21,10 @@
   ],
   "author": "Leif Strøm <proper-deal>",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "@supabase/supabase-js": "^2.76.1",
+    "crypto": "^1.0.1"
+  },
   "devDependencies": {
     "@vercel/node": "^3.0.0"
   },

@@ -4,35 +4,104 @@
  * Supports HubSpot integrations with proper CORS headers
  */
 
+import crypto from 'crypto';
+
+// HubSpot signature validation (lightweight version to avoid 431 errors)
+function validateHubSpotSignature(req) {
+  const signature = req.headers['x-hubspot-signature-v3'];
+  const timestamp = req.headers['x-hubspot-request-timestamp'];
+  
+  // Just log if HubSpot headers are present - don't validate yet
+  if (signature && timestamp) {
+    console.log('HubSpot headers detected - signature length:', signature.length);
+    return true;
+  }
+  
+  console.log('No HubSpot signature headers found');
+  return false;
+}
+
 export default async function handler(req, res) {
   // Set CORS headers for HubSpot integration
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-HubSpot-Signature-v3');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // Only allow POST requests for data queries
-  if (req.method !== 'POST') {
+  // Support both GET and POST requests
+  if (!['GET', 'POST'].includes(req.method)) {
     return res.status(405).json({ 
       error: 'Method not allowed', 
-      message: 'Only POST requests are supported',
-      allowedMethods: ['POST']
+      message: 'Only GET and POST requests are supported',
+      allowedMethods: ['GET', 'POST']
     });
   }
 
   try {
-    const { searchType, searchValue, provider = 'brreg' } = req.body;
+    let searchType, searchValue, provider;
+
+    console.log('=== INCOMING REQUEST DEBUG ===');
+    console.log('Method:', req.method);
+    console.log('Query params:', req.query);
+    console.log('Body:', req.body);
+    console.log('Headers:', req.headers);
+    console.log('Full URL:', req.url);
+    console.log('================================');
+    
+    // Validate HubSpot signature (temporarily disabled to avoid 431 error)
+    const isHubSpotRequest = validateHubSpotSignature(req);
+    console.log('HubSpot request detected:', isHubSpotRequest);
+    
+    // Continue without blocking - we'll implement proper validation later
+
+    // Parse parameters based on request method
+    if (req.method === 'GET') {
+      // GET: Extract from query parameters (ignore HubSpot's extra params)
+      const { navn, organisasjonsnummer, userId, appId, portalId, userEmail, ...cleanQuery } = req.query;
+      
+      console.log('HubSpot extra params detected:', { userId, appId, portalId, userEmail: userEmail ? 'present' : 'missing' });
+      console.log('Clean query params:', cleanQuery);
+      
+      if (navn) {
+        searchType = 'navn';
+        searchValue = navn;
+      } else if (organisasjonsnummer) {
+        searchType = 'organisasjonsnummer';
+        searchValue = organisasjonsnummer;
+      }
+      
+      provider = cleanQuery.provider || 'brreg';
+      
+    } else {
+      // POST: Extract from body (legacy support)
+      ({ searchType, searchValue, provider = 'brreg' } = req.body);
+      
+      // Also support simplified POST format
+      if (!searchType && !searchValue && req.body.navn) {
+        searchType = 'navn';
+        searchValue = req.body.navn;
+      }
+    }
 
     // Validate required parameters
     if (!searchType || !searchValue) {
       return res.status(400).json({
         error: 'Missing required parameters',
-        message: 'searchType and searchValue are required',
-        receivedParams: { searchType, searchValue, provider }
+        message: 'Either "navn" or "organisasjonsnummer" parameter is required',
+        examples: {
+          GET: '/api/business-info?navn=PROPER+AS',
+          POST: '{"navn": "PROPER AS"} or {"searchType": "navn", "searchValue": "PROPER AS"}'
+        },
+        debug: {
+          method: req.method,
+          queryParams: req.query,
+          bodyParams: req.body,
+          receivedParams: { searchType, searchValue, provider }
+        }
       });
     }
 
