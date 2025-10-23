@@ -32,24 +32,22 @@ export default async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  // Simple API key validation (optional for GET, required for POST)
-  const apiKey = req.headers['x-api-key'] || req.body?.apiKey;
-  const expectedApiKey = process.env.BRREG_API_KEY || 'brreg2025'; // Fallback for testing
+    // Simple API key validation - check header first, then body as fallback
+  const apiKey = req.headers['x-api-key'] || req.body?.apiKey || 'brreg2025';
+  const validApiKey = process.env.BRREG_API_KEY || 'brreg2025';
   
-  if (req.method === 'POST') {
-    if (!apiKey || apiKey !== expectedApiKey) {
-      return res.status(403).json({ 
-        success: false, 
-        error: 'Invalid or missing API key' 
-      });
-    }
+  if (apiKey !== validApiKey) {
+    console.log('❌ Invalid API key provided:', apiKey);
+    return res.status(403).json({
+      error: 'Invalid API key'
+    });
   }
 
   try {
