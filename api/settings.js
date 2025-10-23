@@ -39,8 +39,8 @@ export default async (req, res) => {
     return;
   }
 
-    // Simple API key validation - check header first, then body as fallback
-  const apiKey = req.headers['x-api-key'] || req.body?.apiKey || 'brreg2025';
+  // Simple API key validation - check header first, then query, then body (support short and long names)
+  const apiKey = req.headers['x-api-key'] || req.query.k || req.body?.apiKey || req.body?.k || 'brreg2025';
   const validApiKey = process.env.BRREG_API_KEY || 'brreg2025';
   
   if (apiKey !== validApiKey) {
@@ -51,8 +51,9 @@ export default async (req, res) => {
   }
 
   try {
-    const portalId = req.query.portalId || req.body?.portalId || 'default';
-    const type = req.query.type || req.body?.type;
+    // Support both short and long parameter names to reduce header size
+    const portalId = req.query.portalId || req.query.p || req.body?.portalId || req.body?.p || 'default';
+    const type = req.query.type || req.query.t || req.body?.type || req.body?.t;
 
     console.log('Portal ID:', portalId);
     console.log('Type:', type);
@@ -61,7 +62,7 @@ export default async (req, res) => {
       // Retrieve settings from Supabase
       console.log('Getting settings for portal:', portalId);
       
-      if (!portalId || type !== 'field_mappings') {
+      if (!portalId || (type !== 'field_mappings' && type !== 'fm')) {
         return res.status(400).json({ 
           success: false, 
           error: 'Missing portalId or invalid type' 
@@ -86,42 +87,16 @@ export default async (req, res) => {
         portal_id: portalId
       });
 
-    } else if (req.method === 'POST') {
-      // Save settings to Supabase
-      console.log('Saving settings for portal:', portalId);
-      console.log('Request body:', req.body);
-
-      const { data: mappings } = req.body;
-
-      if (!portalId || type !== 'field_mappings' || !mappings) {
+        } else if (req.method === 'POST') {
+      // Store settings in Supabase
+      const mappings = req.body?.data || req.body?.d || req.body?.mappings;
+      
+      if (!portalId || !mappings || (type !== 'field_mappings' && type !== 'fm')) {
         return res.status(400).json({ 
           success: false, 
-          error: 'Missing required fields' 
+          error: 'Missing portalId, mappings, or invalid type' 
         });
       }
-
-      const { data, error } = await supabase
-        .from('field_mappings')
-        .upsert({
-          portal_id: portalId,
-          mappings: mappings,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'portal_id'
-        })
-        .select();
-
-      if (error) {
-        console.error('Supabase error:', error);
-        return res.status(500).json({ success: false, error: error.message });
-      }
-
-      return res.status(200).json({
-        success: true,
-        data: data[0],
-        message: 'Field mappings saved successfully',
-        portal_id: portalId
-      });
 
     } else {
       return res.status(405).json({ 
